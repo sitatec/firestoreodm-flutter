@@ -11,5 +11,9 @@ import 'src/validator_generator.dart';
 /// Builds generators for `build_runner` to run
 Builder firebase(BuilderOptions options) {
   // return SharedPartBuilder([CollectionGenerator(), ValidatorGenerator()], 'firebase');
-  return PartBuilder([CollectionGenerator(), ValidatorGenerator()], '.firebase.dart');
+  return PartBuilder(
+    [CollectionGenerator(), ValidatorGenerator()],
+    '.firebase.dart',
+    options: options,
+  );
 }
