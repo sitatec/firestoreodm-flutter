@@ -3,6 +3,7 @@ description: A code generator for cloud_firestore_odm.
 homepage: https://firebase.flutter.dev/docs/firestore/odm
 repository: https://github.com/firebaseextended/firestoreodm-flutter
 version: 2.0.0
+publish_to: none
 
 environment:
   sdk: ">=3.9.2 <4.0.0"
@@ -10,10 +11,14 @@ environment:
 dependencies:
   analyzer: ^9.0.0
   build: ^4.0.0
-  #cloud_firestore_odm: ^2.0.0
-  # For testing locally
   cloud_firestore_odm:
-    path: ../cloud_firestore_odm
+    git:
+      url: https://github.com/sitatec/firestoreodm-flutter.git
+      ref: mine
+      path: packages/cloud_firestore_odm
+  # For testing locally
+  # cloud_firestore_odm:
+  #   path: ../cloud_firestore_odm
   collection: ^1.18.0
   freezed_annotation: ^3.0.0
   json_annotation: ^4.9.0
