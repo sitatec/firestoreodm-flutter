@@ -88,7 +88,8 @@ class CollectionData with Names {
     required this.perFieldToJson,
     required this.idKey,
     required this.libraryElement,
-  }) : collectionName = collectionName ?? ReCase(path.split('/').last).camelCase;
+  }) : collectionName =
+           collectionName ?? ReCase(path.split('/').last).camelCase;
 
   factory CollectionData.fromAnnotation({
     required LibraryElement libraryElement,
@@ -126,14 +127,18 @@ class CollectionData with Names {
     }
 
     final hasFreezed = freezedChecker.hasAnnotationOf(collectionTargetElement);
-    final redirectedFreezedConstructors = collectionTargetElement.constructors2.where((element) {
-      return element.isFactory &&
-          // It should be safe to read "redirectedConstructor" as the build.yaml
-          // asks to run the ODM after Freezed
-          element.redirectedConstructor2 != null;
-    }).toList();
+    final redirectedFreezedConstructors = collectionTargetElement.constructors
+        .where((element) {
+          return element.isFactory &&
+              // It should be safe to read "redirectedConstructor" as the build.yaml
+              // asks to run the ODM after Freezed
+              element.redirectedConstructor != null;
+        })
+        .toList();
 
-    final hasJsonSerializable = jsonSerializableChecker.hasAnnotationOf(collectionTargetElement);
+    final hasJsonSerializable = jsonSerializableChecker.hasAnnotationOf(
+      collectionTargetElement,
+    );
     // Freezed classes are also JsonSerializable
     if (!hasJsonSerializable && !hasFreezed) {
       throw InvalidGenerationSourceError(
@@ -167,8 +172,9 @@ represents the content of the collection must be in the same file.
       );
     }
 
-    final collectionTargetElementPublicType = collectionTargetElement.name?.public ?? '';
-    final fromJson = collectionTargetElement.constructors2.firstWhereOrNull(
+    final collectionTargetElementPublicType =
+        collectionTargetElement.name?.public ?? '';
+    final fromJson = collectionTargetElement.constructors.firstWhereOrNull(
       (ctor) => ctor.name == 'fromJson',
     );
     if (fromJson != null) {
@@ -187,15 +193,19 @@ represents the content of the collection must be in the same file.
         // Looking into fromJson from superTypes too
         .allMethods
         .firstWhereOrNull((method) => method.name == 'toJson');
-    final redirectedFreezedClass =
-        redirectedFreezedConstructors.singleOrNull?.redirectedConstructor2!.enclosingElement.name;
+    final redirectedFreezedClass = redirectedFreezedConstructors
+        .singleOrNull
+        ?.redirectedConstructor!
+        .enclosingElement
+        .name;
     final generatedJsonTypePrefix = _generatedJsonTypePrefix(
       hasFreezed: hasFreezed,
       redirectedFreezedClass: redirectedFreezedClass,
       collectionTargetElementPublicType: collectionTargetElementPublicType,
     );
     if (toJson != null) {
-      if (toJson.formalParameters.isNotEmpty || !toJson.returnType.isDartCoreMap) {
+      if (toJson.formalParameters.isNotEmpty ||
+          !toJson.returnType.isDartCoreMap) {
         // TODO support serializing generic objects
         throw InvalidGenerationSourceError(
           '@Collection was used with the class ${collectionTargetElement.name} but '
@@ -218,9 +228,13 @@ represents the content of the collection must be in the same file.
         if (toJson != null) return '$value.toJson()';
         return '${generatedJsonTypePrefix}ToJson($value)';
       },
-      perFieldToJson: (field) => '${generatedJsonTypePrefix}PerFieldToJson.$field',
+      perFieldToJson: (field) =>
+          '${generatedJsonTypePrefix}PerFieldToJson.$field',
       idKey: collectionTargetElement
-          .allFields(hasFreezed: hasFreezed, freezedConstructors: redirectedFreezedConstructors)
+          .allFields(
+            hasFreezed: hasFreezed,
+            freezedConstructors: redirectedFreezedConstructors,
+          )
           .firstWhereOrNull((f) => f.hasId())
           ?.name,
       queryableFields: [
@@ -278,7 +292,10 @@ represents the content of the collection must be in the same file.
           updatable: false,
         ),
         ...collectionTargetElement
-            .allFields(hasFreezed: hasFreezed, freezedConstructors: redirectedFreezedConstructors)
+            .allFields(
+              hasFreezed: hasFreezed,
+              freezedConstructors: redirectedFreezedConstructors,
+            )
             .where((f) => f.isPublic)
             .where((f) => !f.hasId())
             .where((f) => !f.isJsonIgnored())
@@ -298,7 +315,9 @@ represents the content of the collection must be in the same file.
 
     final classPrefix = data.classPrefix;
 
-    if (globalData.classPrefixesForLibrary[annotatedElementSource]?.contains(classPrefix) ??
+    if (globalData.classPrefixesForLibrary[annotatedElementSource]?.contains(
+          classPrefix,
+        ) ??
         false) {
       throw InvalidGenerationSourceError(
         'Defined a collection with duplicate class prefix $classPrefix. '
@@ -307,7 +326,9 @@ represents the content of the collection must be in the same file.
     }
 
     globalData.classPrefixesForLibrary[annotatedElementSource] ??= [];
-    globalData.classPrefixesForLibrary[annotatedElementSource]!.add(classPrefix);
+    globalData.classPrefixesForLibrary[annotatedElementSource]!.add(
+      classPrefix,
+    );
 
     return data;
   }
@@ -360,7 +381,8 @@ represents the content of the collection must be in the same file.
     required String collectionTargetElementPublicType,
   }) {
     if (hasFreezed) {
-      final className = redirectedFreezedClass?.public ?? collectionTargetElementPublicType;
+      final className =
+          redirectedFreezedClass?.public ?? collectionTargetElementPublicType;
       // Only support freezed 3.x or higher
       return '_\$$className';
     } else {
@@ -379,7 +401,9 @@ represents the content of the collection must be in the same file.
   final List<QueryingField> queryableFields;
   final LibraryElement libraryElement;
 
-  late final updatableFields = queryableFields.where((element) => element.updatable).toList();
+  late final updatableFields = queryableFields
+      .where((element) => element.updatable)
+      .toList();
 
   CollectionData? _parent;
   CollectionData? get parent => _parent;
@@ -399,10 +423,10 @@ represents the content of the collection must be in the same file.
 
 extension on ClassElement {
   Iterable<MethodElement> get allMethods sync* {
-    yield* methods2;
+    yield* methods;
     for (final supertype in allSupertypes) {
       if (supertype.isDartCoreObject) continue;
-      yield* supertype.methods2;
+      yield* supertype.methods;
     }
   }
 
@@ -416,24 +440,29 @@ extension on ClassElement {
       ///
       /// We need to find the factory constructor, or the normal constructor if there is no factory.
       final factoryConstructor = freezedConstructors.firstWhereOrNull(
-        (ctor) => ctor.isFactory && !ctor.name!.startsWith('_') && ctor.name != 'fromJson',
+        (ctor) =>
+            ctor.isFactory &&
+            !ctor.name!.startsWith('_') &&
+            ctor.name != 'fromJson',
       );
       if (factoryConstructor == null) {
         // No factory constructor, use the normal constructor
-        return fields2;
+        return fields;
       }
       return factoryConstructor.formalParameters;
     } else {
       final uniqueFields = <String, FieldElement>{};
 
       final allFields = const <FieldElement>[]
-          .followedBy(fields2)
+          .followedBy(fields)
           .followedBy(
-            allSupertypes.where((e) => !e.isDartCoreObject).expand((e) => e.element.fields2),
+            allSupertypes
+                .where((e) => !e.isDartCoreObject)
+                .expand((e) => e.element.fields),
           );
 
       for (final field in allFields) {
-        if (field.getter2 != null && !field.getter2!.isSynthetic) continue;
+        if (field.getter != null && !field.getter!.isSynthetic) continue;
         if (field.isStatic) continue;
         uniqueFields[field.name!] ??= field;
       }
@@ -454,7 +483,9 @@ const _coreSetChecker = TypeChecker.fromUrl('dart:core#Set');
 extension DartTypeExtension on DartType {
   bool get isJsonDocumentReference {
     return element?.library?.uri.scheme == 'package' &&
-        const {'cloud_firestore'}.contains(element?.library?.uri.pathSegments.first) &&
+        const {
+          'cloud_firestore',
+        }.contains(element?.library?.uri.pathSegments.first) &&
         element?.name == 'DocumentReference' &&
         (this as InterfaceType).typeArguments.single.isDartCoreMap;
   }
